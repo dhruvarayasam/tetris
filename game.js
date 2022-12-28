@@ -20,24 +20,39 @@ ctx.scale(BLOCK_SIZE, BLOCK_SIZE);
 class Board {
 
     constructor() {
-
+        this.grid = this.getClearBoard();
     }
 
-    getEmptyBoard() {
-
+    resetBoard() {
+        this.grid = this.getClearBoard()
     }
 
-    clearBoard() {
-
+    getClearBoard() {
+        return Array.from(
+            {length: ROWS}, () => Array(COLS).fill(0)
+          );
     }
 
 }
 
 //piece class
-
 class Piece {
-
+    constructor(color) {
+        this.x = 5;
+        this.y = 0;
+        this.color = color;
+    }
 }
+
+
+//main game logic
+
+function playGame() {
+    let board = new Board();
+    console.table(board.grid);
+}
+
+playGame()
 
 
 
