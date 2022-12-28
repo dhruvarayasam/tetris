@@ -24,7 +24,7 @@ body {
 
 #button-id {
     position:absolute;
-    bottom:25px;
+    bottom:16.5px;
 }
 
 .buttons {
@@ -49,7 +49,5 @@ body {
 
 #gameCanvas {
     padding:0;
-    width: 400px;
-    height: 650px;
     border-style: solid;
 }
