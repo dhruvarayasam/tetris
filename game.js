@@ -37,19 +37,41 @@ class Board {
 
 //piece class
 class Piece {
-    constructor(color) {
+    constructor() {
         this.x = 5;
         this.y = 0;
-        this.color = color;
+        this.color = this.chooseRandomPieceColor();
     }
+
+    chooseRandomPieceColor() {
+        let colorArray = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+        let num = Math.floor(Math.random() * 7)
+        let color = colorArray[num];
+
+        return color;
+    }
+
+    determineRandomShape(num) {
+
+    }
+
+
+
+
 }
 
 
 //main game logic
 
+//board
+let board = new Board();
+
 function playGame() {
-    let board = new Board();
     console.table(board.grid);
+}
+
+function reset() {
+    board.resetBoard()
 }
 
 playGame()
