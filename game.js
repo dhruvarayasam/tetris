@@ -3,16 +3,17 @@
 //constants
 var BLOCK_SIZE = 30;
 var COLS = 10;
-var ROWS = 22;
+var ROWS = 20;
 
 //canvas and context, defines default fill color to red and rows/cols, also scales ctx
 var canvas = document.getElementById("gameCanvas");
+canvas.height = BLOCK_SIZE * ROWS;
+canvas.width = BLOCK_SIZE * COLS;
+
 var ctx = canvas.getContext("2d");
 ctx.fillStyle = "#FF0000"
-ctx.canvas.width = COLS * BLOCK_SIZE;
-ctx.canvas.height = ROWS * BLOCK_SIZE;
 
-ctx.scale(BLOCK_SIZE, BLOCK_SIZE);
+
 
 
 //board class
@@ -21,6 +22,7 @@ class Board {
 
     constructor() {
         this.grid = this.getClearBoard();
+        this.pieces = []; // contains all Piece objects
     }
 
     resetBoard() {
@@ -33,10 +35,14 @@ class Board {
           );
     }
 
+    draw() { //renders pieces on board
+
+    }
+
 }
 
 //piece class
-class Piece {
+class Piece { // responsible for supplying color, shape, and location of piece
     constructor() {
         this.x = 5;
         this.y = 0;
@@ -49,10 +55,6 @@ class Piece {
         let color = colorArray[num];
 
         return color;
-    }
-
-    determineRandomShape(num) {
-
     }
 
 
@@ -68,13 +70,12 @@ let board = new Board();
 
 function playGame() {
     console.table(board.grid);
+    ctx.fillRect(0, 0, 20, 20);
 }
 
 function reset() {
     board.resetBoard()
 }
-
-playGame()
 
 
 
