@@ -18,7 +18,9 @@ class Piece { // responsible for supplying color, shape, and location of piece
     constructor() {
         this.x = 4;
         this.y = 0;
-        this.velocity = 0.2;
+        this.defaultVelocity = 0.3;
+        this.yvelocity = this.defaultVelocity;
+        this.xvelocity = 0;
         this.color = this.chooseRandomPieceColor();
         this.shape = this.determineShape()
         pieces.push(this);
@@ -69,6 +71,21 @@ class Piece { // responsible for supplying color, shape, and location of piece
         return pieceShape;
     }
 
+    rotate() {
+        console.log(this.shape)
+        for (let y = 0; y < this.shape.length; ++y) {
+            for (let x = 0; x < y; ++x) {
+              [this.shape[x][y], this.shape[y][x]] = 
+              [this.shape[y][x], this.shape[x][y]];
+            }
+          }
+          
+          // Reverse the order of the columns.
+          this.shape.forEach(row => row.reverse());
+
+          console.log(this.shape)
+    }
+
 
 
 
@@ -93,8 +110,8 @@ window.onload = function() {
     pauseBtn.addEventListener('click', pauseFunc, false);
     resetBtn.addEventListener('click', resetBoard, false);
     
-    document.addEventListener('keydown', acceleratePiece, false)
-    document.addEventListener('keyup', deceleratePiece, false)
+    document.addEventListener('keydown', userInput, false)
+    document.addEventListener('keyup', releaseUserInput, false)
 
 
 }
@@ -103,7 +120,7 @@ window.onload = function() {
 
 gameLoop = function() {
     playStatus = true;
-    setInterval(update, 1000/10)
+    setInterval(update, 1000)
 }
 
 pauseFunc = function() {
@@ -123,9 +140,9 @@ function update() {
             mainPiece = new Piece();
         }
 
-        pieceMovement()
-
-
+        ctx.fillStyle = mainPiece.color;
+        console.log(mainPiece.xvelocity);
+        constantMovement()
 
 
 
@@ -145,7 +162,6 @@ function reset() {
 
 // piece logic
 function renderPiece(piece) {
-    
     for (let i = 0; i<piece.shape.length; i++) {
         for (let j = 0; j<piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
@@ -153,8 +169,6 @@ function renderPiece(piece) {
             }
         }
     }
-
-
 }
 
 function clearPiece(piece) {
@@ -176,21 +190,34 @@ function generateNewPieceCond() { // determines whether new piece should be gene
 }
 
 // movement logic
-function pieceMovement() {
+function constantMovement() {
     renderPiece(mainPiece);
     clearPiece(mainPiece)
-
-    mainPiece.y = mainPiece.y + mainPiece.velocity;
-
+    mainPiece.y = mainPiece.y + mainPiece.yvelocity;
+    mainPiece.x = mainPiece.x + mainPiece.xvelocity;
     renderPiece(mainPiece)
 }
 
-function acceleratePiece(e) {
-    mainPiece.velocity = 0.7
+function userInput(e) {
+    if (e.code === "ArrowDown") {
+        mainPiece.yvelocity = mainPiece.defaultVelocity + 0.2;
+        mainPiece.xvelocity = 0;
+    } else if (e.code === "ArrowLeft") {
+        mainPiece.yvelocity = 0;
+        mainPiece.xvelocity = -mainPiece.defaultVelocity;
+    } else if (e.code === "ArrowRight") {
+        mainPiece.yvelocity = 0;
+        mainPiece.xvelocity = mainPiece.defaultVelocity;
+    } else if (e.code === "ArrowUp") {
+        mainPiece.rotate();
+    }
 }
 
-function deceleratePiece() {
-    mainPiece.velocity = 0.3;
+function releaseUserInput(e) {
+    if (e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") {
+        mainPiece.yvelocity = mainPiece.defaultVelocity;
+        mainPiece.xvelocity = 0;
+    }
 }
 
 function collisionDetection(mainPiece) {
