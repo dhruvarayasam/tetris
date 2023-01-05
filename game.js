@@ -12,13 +12,13 @@ var playBtn = document.getElementById("play-btn")
 var pauseBtn = document.getElementById("pause-btn")
 var resetBtn = document.getElementById("reset-btn")
 var pieces = [];
-
+var collisionBool = false;
 
 class Piece { // responsible for supplying color, shape, and location of piece
     constructor() {
         this.x = 4;
-        this.y = 0;
-        this.defaultVelocity = 0.3;
+        this.y = 1;
+        this.defaultVelocity = 1;
         this.yvelocity = this.defaultVelocity;
         this.xvelocity = 0;
         this.color = this.chooseRandomPieceColor();
@@ -72,7 +72,6 @@ class Piece { // responsible for supplying color, shape, and location of piece
     }
 
     rotate() {
-        console.log(this.shape)
         for (let y = 0; y < this.shape.length; ++y) {
             for (let x = 0; x < y; ++x) {
               [this.shape[x][y], this.shape[y][x]] = 
@@ -82,15 +81,35 @@ class Piece { // responsible for supplying color, shape, and location of piece
           
           // Reverse the order of the columns.
           this.shape.forEach(row => row.reverse());
-
-          console.log(this.shape)
     }
 
 
 
 
 }
+
+class Board {
+
+    constructor() {
+        this.grid = this.getClearBoard();
+        this.pieces = []; // contains all Piece objects
+    }
+
+    resetBoard() {
+        this.grid = this.getClearBoard()
+    }
+
+    getClearBoard() {
+        return Array.from(
+            {length: ROWS}, () => Array(COLS).fill(0)
+          );
+    }
+
+
+}
+
 var mainPiece = new Piece();
+var board = new Board();
 
 //canvas and context, defines default fill color to red and rows/cols, also scales ctx
 
@@ -120,7 +139,8 @@ window.onload = function() {
 
 gameLoop = function() {
     playStatus = true;
-    setInterval(update, 1000)
+    setInterval(update, 1000/10)
+    // update()
 }
 
 pauseFunc = function() {
@@ -134,15 +154,17 @@ resetBoard = function() {
 
 function update() {
 
+    ctx.clearRect(0, 0, COLS, ROWS);
+
     if (playStatus) { // play game
 
         if (generateNewPieceCond()) {
             mainPiece = new Piece();
         }
-
         ctx.fillStyle = mainPiece.color;
-        console.log(mainPiece.xvelocity);
+        
         constantMovement()
+
 
 
 
@@ -162,20 +184,11 @@ function reset() {
 
 // piece logic
 function renderPiece(piece) {
+
     for (let i = 0; i<piece.shape.length; i++) {
         for (let j = 0; j<piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
                 ctx.fillRect(piece.x+j, piece.y + i, 1, 1)
-            }
-        }
-    }
-}
-
-function clearPiece(piece) {
-    for (let i = 0; i<piece.shape.length; i++) {
-        for (let j = 0; j<piece.shape[i].length; j++) {
-            if (piece.shape[i][j] > 0) {
-                ctx.clearRect(piece.x+j, piece.y + i, 1, 1)
             }
         }
     }
@@ -191,16 +204,20 @@ function generateNewPieceCond() { // determines whether new piece should be gene
 
 // movement logic
 function constantMovement() {
-    renderPiece(mainPiece);
-    clearPiece(mainPiece)
-    mainPiece.y = mainPiece.y + mainPiece.yvelocity;
-    mainPiece.x = mainPiece.x + mainPiece.xvelocity;
+    let yOperation = mainPiece.y + mainPiece.yvelocity
+    let xOperation = mainPiece.x + mainPiece.xvelocity;
+
+    if (!collisionDetection(xOperation, yOperation)) {
+        mainPiece.x = xOperation;
+        mainPiece.y = yOperation;
+    }
     renderPiece(mainPiece)
+
 }
 
 function userInput(e) {
-    if (e.code === "ArrowDown") {
-        mainPiece.yvelocity = mainPiece.defaultVelocity + 0.2;
+    if (e.code === "ArrowDown" ) {
+        mainPiece.yvelocity = mainPiece.defaultVelocity + 2;
         mainPiece.xvelocity = 0;
     } else if (e.code === "ArrowLeft") {
         mainPiece.yvelocity = 0;
@@ -208,7 +225,9 @@ function userInput(e) {
     } else if (e.code === "ArrowRight") {
         mainPiece.yvelocity = 0;
         mainPiece.xvelocity = mainPiece.defaultVelocity;
-    } else if (e.code === "ArrowUp") {
+    } 
+    
+    else if (e.code === "ArrowUp") {
         mainPiece.rotate();
     }
 }
@@ -220,8 +239,19 @@ function releaseUserInput(e) {
     }
 }
 
-function collisionDetection(mainPiece) {
-    
+function collisionDetection(x, y) {
+    console.log(x, y)
+    if (x > COLS) {
+        return true;
+    } if (x === 0) {
+        return true;
+    } if (y === 0) {
+        return true;
+    } if (y > ROWS) {
+        return true;
+    }
+
+    return false;
 }
 
 // points/levels logic
@@ -234,37 +264,16 @@ function collisionDetection(mainPiece) {
 // end of game logic
 // code //
 
-//board class
-class Board {
-
-    constructor() {
-        this.grid = this.getClearBoard();
-        this.pieces = []; // contains all Piece objects
-    }
-
-    resetBoard() {
-        this.grid = this.getClearBoard()
-    }
-
-    getClearBoard() {
-        return Array.from(
-            {length: ROWS}, () => Array(COLS).fill(0)
-          );
-    }
-
-    draw() { //renders pieces on board, called everytime a new piece needs to be rendered
-
-    }
-
-}
-
 // classes
 
 
 //main game logic
 
-//board
-let board = new Board();
+function renderAllPieces() { // renders pieces that are stillon the board
+
+}
+
+
 
 
 
