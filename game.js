@@ -279,27 +279,47 @@ function collisionDetection(piece, proposedCoords) {
     let leftLoc; 
     let rightLoc;
 
-    // find furthest Top point
+    let stopBool = false;
+
+    // find furthest Top point *done
     for (let i = 0; i < piece.shape.length; i++) {
         for (let j = 0; j < piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
                 furthestTop = i;
+                stopBool = true;
+            }
+
+            if (stopBool) {
                 break;
             }
         }
+
+        if (stopBool) {
+            break;
+        }
     }
 
-    // find furthest bottom point
+    stopBool = false;
+    // find furthest bottom point *done
     for (let i = piece.shape.length-1; i > 0; i--) {
         for (let j = 0; j < piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
-                furthestBottom = piece.shape.length - i;
+                console.log(i)
+                furthestBottom = i;
+                stopBool = true
+            }
+
+            if (stopBool) {
                 break;
             }
         }
+
+        if (stopBool) {
+            break;
+        }
     }
 
-    // find furthest left point
+    // find furthest left point *done
     for (let i = 0; i < piece.shape.length; i++) {
         for (let j = 0; j < piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
@@ -310,12 +330,12 @@ function collisionDetection(piece, proposedCoords) {
         }
     }
 
-    // find furthest right point
+    // find furthest right point *done
     for (let i = 0; i < piece.shape.length; i++) {
         for (let j = piece.shape[i].length-1; j > 0; j--) {
             if (piece.shape[i][j] > 0) {
                 if (j > furthestRight) {
-                    furthestRight = piece.shape[i].length-j;
+                    furthestRight = j;
                 }
             }
         }
