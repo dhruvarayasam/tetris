@@ -170,7 +170,7 @@ function update() {
 
 
     } else { // freeze game
-
+        renderPiece(mainPiece);
     }
 
 
@@ -189,6 +189,10 @@ function renderPiece(piece) {
     for (let i = 0; i < piece.shape.length; i++) {
         for (let j = 0; j < piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
+                ctx.fillStyle= "red"
+                ctx.fillRect(piece.x + j, piece.y + i, 1, 1)
+            } else {
+                ctx.fillStyle = "yellow"
                 ctx.fillRect(piece.x + j, piece.y + i, 1, 1)
             }
         }
@@ -207,14 +211,20 @@ function generateNewPieceCond() { // determines whether new piece should be gene
 function constantMovement() {
     let xPropsed = mainPiece.x + mainPiece.xvelocity;
     let yProposed = mainPiece.y + mainPiece.yvelocity;
-
-    if (!collisionDetection(mainPiece, [xPropsed, yProposed])) { // if no collision is detected, then move wherever
+    // let result = collisionDetection(mainPiece, [xPropsed, yProposed])
+    // let collisionDetected = result[0] // if true, collision happened
+    let collisionDetected = false;
+    if (!collisionDetected) { // if no collision is detected, then move wherever
         mainPiece.y = mainPiece.y + mainPiece.yvelocity;
         mainPiece.x = mainPiece.x + mainPiece.xvelocity;
     } else {
 
         // collisionDetection will return in what directions collision will occur
         // based on which directions collision will occur, determine whether to move down or not
+        if (result[1] === "bottom") {
+            mainPiece.yvelocity = 0;
+        }
+
 
 
 
@@ -225,7 +235,6 @@ function constantMovement() {
     //info
     console.log("x, y: " + mainPiece.x, mainPiece.y);
     console.log("xvel, yvel: ", mainPiece.xvelocity, mainPiece.yvelocity);
-
 }
 
 function userInput(e) {
@@ -249,6 +258,7 @@ function releaseUserInput(e) {
     if (e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") {
         mainPiece.yvelocity = mainPiece.defaultVelocity;
         mainPiece.xvelocity = 0;
+        console.log(e.code)
     }
 }
 
@@ -257,16 +267,12 @@ function collisionDetection(piece, proposedCoords) {
     // returns --> [bool of whether collision will occur, [arr of directions in which collision will occur]]
 
     // take current coords from piece
-    // find furthest points on each side and determine whether the proposed coordinates would cross any border
-
-    //borders
-    let topBorder = 0;
-    let bottomBorder = ROWS;
-    let leftBorder = 0;
-    let rightBorder = COLS;
+    // find length and height of piece, then add to xy coords and see if it crosses any border
+    let returnArr = [false, []];
 
     // find furthest point on each side 
     // (index of furthest row or column, has to be in terms of xy coords of piece container)
+    // calculate and save actual xy locations of extremities
 
     let furthestTop;
     let furthestBottom;
@@ -276,83 +282,44 @@ function collisionDetection(piece, proposedCoords) {
     //x and y locations of extremities
     let topLoc; 
     let bottomLoc; 
-    let leftLoc; 
+    let leftLoc;
     let rightLoc;
 
-    let stopBool = false;
+    let length = 0;
 
-    // find furthest Top point *done
+    //find length
+    for (let i = 0; i < piece.shape.length; i++) {
+        for (j=0; j < piece.shape[i].length; j++) {
+            if (piece.shape[i][j] > 0 && j > length) {
+                length++;
+            }
+        }
+    }
+
+    //find height
     for (let i = 0; i < piece.shape.length; i++) {
         for (let j = 0; j < piece.shape[i].length; j++) {
-            if (piece.shape[i][j] > 0) {
-                furthestTop = i;
-                stopBool = true;
-            }
 
-            if (stopBool) {
-                break;
-            }
-        }
-
-        if (stopBool) {
-            break;
         }
     }
-
-    stopBool = false;
-    // find furthest bottom point *done
-    for (let i = piece.shape.length-1; i > 0; i--) {
-        for (let j = 0; j < piece.shape[i].length; j++) {
-            if (piece.shape[i][j] > 0) {
-                console.log(i)
-                furthestBottom = i;
-                stopBool = true
-            }
-
-            if (stopBool) {
-                break;
-            }
-        }
-
-        if (stopBool) {
-            break;
-        }
-    }
-
-    // find furthest left point *done
-    for (let i = 0; i < piece.shape.length; i++) {
-        for (let j = 0; j < piece.shape[i].length; j++) {
-            if (piece.shape[i][j] > 0) {
-                if (j < furthestLeft) {
-                    furthestLeft = j;
-                }
-            }
-        }
-    }
-
-    // find furthest right point *done
-    for (let i = 0; i < piece.shape.length; i++) {
-        for (let j = piece.shape[i].length-1; j > 0; j--) {
-            if (piece.shape[i][j] > 0) {
-                if (j > furthestRight) {
-                    furthestRight = j;
-                }
-            }
-        }
-    }
-
-    // calculate locations of extremities
 
     // difference between existing coordinates and proposed coordinates
+    let xDifference = proposedCoords[0] - piece.x;
+    let yDifference = proposedCoords[1] - piece.y;
 
+    // if xDiff or yDiff + existing coords of extremities cross borders, then stop motion in respective direction
+    // go by each direction
 
+    // top
+    if (determineBoundViolations(topLoc, xDifference, yDifference)) {
+        returnArr[0] = true;
+        returnArr[1].push('top')
 
-    
-
+        return returnArr
+    }
 
 
 }
-
 // points/levels logic
 
 // play/pause logic
