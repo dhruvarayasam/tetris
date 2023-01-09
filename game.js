@@ -1,4 +1,4 @@
-
+"use strict";
 
 //constants
 var BLOCK_SIZE = 10;
@@ -107,6 +107,28 @@ class Board {
         );
     }
 
+    movePieces(direction) {
+        
+    }
+
+    displayPieces(piece) {
+        this.resetBoard()
+        let row = 0;
+        let col = 0;
+
+        for (let i = piece.y; i < piece.y + piece.shape.length; i++) {
+            for (let j = piece.x; j < piece.x + piece.shape[0].length; j++) {
+                this.grid[i][j] = piece.shape[i-piece.y][j-piece.x]
+            }
+        }
+
+        return this.grid;
+    }
+
+    isValidMove() {
+
+    }
+
 
 }
 
@@ -139,17 +161,17 @@ window.onload = function () {
 
 // game loop logic
 
-gameLoop = function () {
+let gameLoop = function () {
     playStatus = true;
     setInterval(update, 1000 / 10)
     // update()
 }
 
-pauseFunc = function () {
+let pauseFunc = function () {
     playStatus = false;
 }
 
-resetBoard = function () {
+let resetBoard = function () {
     playStatus = false;
     reset()
 }
@@ -209,32 +231,16 @@ function generateNewPieceCond() { // determines whether new piece should be gene
 
 // movement logic
 function constantMovement() {
-    let xPropsed = mainPiece.x + mainPiece.xvelocity;
-    let yProposed = mainPiece.y + mainPiece.yvelocity;
-    // let result = collisionDetection(mainPiece, [xPropsed, yProposed])
-    // let collisionDetected = result[0] // if true, collision happened
-    let collisionDetected = false;
-    if (!collisionDetected) { // if no collision is detected, then move wherever
-        mainPiece.y = mainPiece.y + mainPiece.yvelocity;
-        mainPiece.x = mainPiece.x + mainPiece.xvelocity;
-    } else {
 
-        // collisionDetection will return in what directions collision will occur
-        // based on which directions collision will occur, determine whether to move down or not
-        if (result[1] === "bottom") {
-            mainPiece.yvelocity = 0;
-        }
-
-
-
-
-    }
+    mainPiece.y = mainPiece.y + mainPiece.yvelocity;
+    mainPiece.x = mainPiece.x + mainPiece.xvelocity;
 
     renderPiece(mainPiece)
 
     //info
     console.log("x, y: " + mainPiece.x, mainPiece.y);
     console.log("xvel, yvel: ", mainPiece.xvelocity, mainPiece.yvelocity);
+    console.table(board.displayPieces(mainPiece))
 }
 
 function userInput(e) {
@@ -263,77 +269,8 @@ function releaseUserInput(e) {
 }
 
 function collisionDetection(piece, proposedCoords) {
-    // params --> piece (mainPiece object), proposedCoords (arr of INTENDED x and y coords)
-    // returns --> [bool of whether collision will occur, [arr of directions in which collision will occur]]
-
-    // take current coords from piece
-    // find length and height of piece, then add to xy coords and see if it crosses any border
-    let returnArr = [false, []];
-
-    // find furthest point on each side 
-    // (index of furthest row or column, has to be in terms of xy coords of piece container)
-    // calculate and save actual xy locations of extremities
-
-    let furthestTop;
-    let furthestBottom;
-    let furthestLeft = 3;
-    let furthestRight = 0;
-
-    //x and y locations of extremities
-    let topLoc; 
-    let bottomLoc; 
-    let leftLoc;
-    let rightLoc;
-
-    let length = 0;
-
-    //find length
-    for (let i = 0; i < piece.shape.length; i++) {
-        for (j=0; j < piece.shape[i].length; j++) {
-            if (piece.shape[i][j] > 0 && j > length) {
-                length++;
-            }
-        }
-    }
-
-    //find height
-    for (let i = 0; i < piece.shape.length; i++) {
-        for (let j = 0; j < piece.shape[i].length; j++) {
-
-        }
-    }
-
-    // difference between existing coordinates and proposed coordinates
-    let xDifference = proposedCoords[0] - piece.x;
-    let yDifference = proposedCoords[1] - piece.y;
-
-    // if xDiff or yDiff + existing coords of extremities cross borders, then stop motion in respective direction
-    // go by each direction
-
-    // top
-    if (determineBoundViolations(topLoc, xDifference, yDifference)) {
-        returnArr[0] = true;
-        returnArr[1].push('top')
-
-        return returnArr
-    }
-
 
 }
-// points/levels logic
-
-// play/pause logic
-// code //
-
-
-
-// end of game logic
-// code //
-
-// classes
-
-
-//main game logic
 
 function renderAllPieces() { // renders pieces that are stillon the board
 
