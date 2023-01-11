@@ -83,6 +83,8 @@ class Piece { // responsible for supplying color, shape, and location of piece
     }
 
     rotate() {
+
+        let copyArr = []
         if (!mainPiece.setStatus) {
 	        for (let y = 0; y < this.shape.length; ++y) {
 	            for (let x = 0; x < y; ++x) {
@@ -93,6 +95,23 @@ class Piece { // responsible for supplying color, shape, and location of piece
 	
 	        // Reverse the order of the columns.
 	        this.shape.forEach(row => row.reverse());
+        }
+
+        for (let i = 0; i < this.shape.length; i++) {
+            for (let j = 0; j < this.shape[i].length; j++) {
+
+                if (this.shape[i][j] > 0) {
+	                if (this.x + j < 0) {
+	                    this.x = this.x + 2;
+	                } else if (this.x + j >= COLS) {
+                        this.x = this.x - 1
+                    }
+	
+	                if (this.y + i>= ROWS) {
+                        this.y = this.y -1;
+	                }
+                }
+            }
         }
 
     }
@@ -117,20 +136,18 @@ class Board {
 
     updateBoard() {
         this.displayPieces(mainPiece)
-        console.log(this.grid)
+        console.table(this.grid)
     }
 
 
     displayPieces(piece) {
-        this.resetBoard()
-        
 
-            for (let i = piece.y; i < piece.y + piece.shape.length; i++) {
-                for (let j = piece.x; j < piece.x + piece.shape[0].length; j++) {
+        for (let i = piece.y; i < piece.y + piece.shape.length; i++) {
+            for (let j = piece.x; j < piece.x + piece.shape[0].length; j++) {
 
-                    this.grid[i][j] = piece.shape[i-piece.y][j-piece.x]
-                }
+                this.grid[i][j] = piece.shape[i-piece.y][j-piece.x]
             }
+        }
 
         return this.grid;
     }
@@ -164,6 +181,16 @@ class Board {
         return false;
 
 
+    }
+
+    setPieces(piece) {
+        if (piece.setStatus) {
+            for (let i = 0; i < piece.shape.length; i++) {
+                for (let j = 0; j < piece.shape[i].length; j++) {
+                    
+                }
+            }
+        }
     }
 
 }
@@ -226,6 +253,7 @@ function update() {
 
 
         constantMovement()
+        board.updateBoard()
         // board.updateBoard()
         renderPiece(mainPiece)
 
