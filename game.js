@@ -12,15 +12,16 @@ var playBtn = document.getElementById("play-btn")
 var pauseBtn = document.getElementById("pause-btn")
 var resetBtn = document.getElementById("reset-btn")
 var pieces = [];
-var collisionBool = false;
 
 class Piece { // responsible for supplying color, shape, and location of piece
     constructor() {
         this.x = 0;
         this.y = 0;
         this.defaultVelocity = 1;
-        this.yvelocity = this.defaultVelocity;
+        this.yvelocity = 1;
         this.xvelocity = 0;
+        this.setStatus = false;
+        this.pieceId = Math.floor((Math.random() * 100)) + 1
         this.color = this.chooseRandomPieceColor();
         this.shape = this.determineShape()
         pieces.push(this);
@@ -68,25 +69,33 @@ class Piece { // responsible for supplying color, shape, and location of piece
         let index = Math.floor(Math.random() * SHAPES.length);
         let pieceShape = SHAPES[index];
 
+        for (let i = 0; i < pieceShape.length; i++) {
+            for (let j = 0; j < pieceShape[i].length; j++) {
+                if (pieceShape[i][j] > 0) {
+                    pieceShape[i][j] = this.pieceId;
+                }
+            }
+        }
+
 
 
         return pieceShape;
     }
 
     rotate() {
-        for (let y = 0; y < this.shape.length; ++y) {
-            for (let x = 0; x < y; ++x) {
-                [this.shape[x][y], this.shape[y][x]] =
-                    [this.shape[y][x], this.shape[x][y]];
-            }
+        if (!mainPiece.setStatus) {
+	        for (let y = 0; y < this.shape.length; ++y) {
+	            for (let x = 0; x < y; ++x) {
+	                [this.shape[x][y], this.shape[y][x]] =
+	                    [this.shape[y][x], this.shape[x][y]];
+	            }
+	        }
+	
+	        // Reverse the order of the columns.
+	        this.shape.forEach(row => row.reverse());
         }
 
-        // Reverse the order of the columns.
-        this.shape.forEach(row => row.reverse());
     }
-
-
-
 
 }
 
@@ -94,7 +103,6 @@ class Board {
 
     constructor() {
         this.grid = this.getClearBoard();
-        this.pieces = []; // contains all Piece objects
     }
 
     resetBoard() {
@@ -107,28 +115,56 @@ class Board {
         );
     }
 
-    movePieces(direction) {
-        
+    updateBoard() {
+        this.displayPieces(mainPiece)
+        console.log(this.grid)
     }
+
 
     displayPieces(piece) {
         this.resetBoard()
-        let row = 0;
-        let col = 0;
+        
 
-        for (let i = piece.y; i < piece.y + piece.shape.length; i++) {
-            for (let j = piece.x; j < piece.x + piece.shape[0].length; j++) {
-                this.grid[i][j] = piece.shape[i-piece.y][j-piece.x]
+            for (let i = piece.y; i < piece.y + piece.shape.length; i++) {
+                for (let j = piece.x; j < piece.x + piece.shape[0].length; j++) {
+
+                    this.grid[i][j] = piece.shape[i-piece.y][j-piece.x]
+                }
             }
-        }
 
         return this.grid;
     }
 
-    isValidMove() {
+    collisionDetection(piece, proposedCoords) {
+        // goes through each block in tetronimo and simulates shift in position 
+        // if any part of tetronimo is outside bounds, returns true for collision detected
+
+
+        let dy = proposedCoords[1] - piece.y
+        let dx = proposedCoords[0] - piece.x
+
+
+        for (let i = 0; i < piece.shape.length; i++) {
+            for (let j = 0; j < piece.shape[i].length; j++) {
+
+                if (piece.shape[i][j] > 0) {
+	                if (piece.x + j + dx < 0 || piece.x + j + dx >= COLS) {
+	                    return true;
+	                }
+	
+	                if (piece.y + i + dy >= ROWS) {
+                        piece.yvelocity = 0;
+                        piece.setStatus = true;
+	                    return true;
+	                }
+                }
+            }
+        }
+
+        return false;
+
 
     }
-
 
 }
 
@@ -163,7 +199,7 @@ window.onload = function () {
 
 let gameLoop = function () {
     playStatus = true;
-    setInterval(update, 1000 / 10)
+    setInterval(update, 1000/10)
     // update()
 }
 
@@ -180,6 +216,7 @@ function update() {
 
     ctx.clearRect(0, 0, COLS, ROWS);
 
+
     if (playStatus) { // play game
 
         if (generateNewPieceCond()) {
@@ -187,16 +224,16 @@ function update() {
         }
         ctx.fillStyle = mainPiece.color;
 
+
         constantMovement()
+        // board.updateBoard()
+        renderPiece(mainPiece)
 
 
 
     } else { // freeze game
         renderPiece(mainPiece);
     }
-
-
-
 }
 
 function reset() {
@@ -208,6 +245,7 @@ function reset() {
 // piece logic
 function renderPiece(piece) {
 
+    
     for (let i = 0; i < piece.shape.length; i++) {
         for (let j = 0; j < piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
@@ -224,36 +262,46 @@ function renderPiece(piece) {
 function generateNewPieceCond() { // determines whether new piece should be generated or not
     // new piece should be generated when:
     // when the first piece (piece you start the game with) or when any piece after is set in its position
-
-    return false;
+    if (mainPiece.setStatus) {
+        return true;
+    } else {
+        return false;
+    }
 
 }
 
 // movement logic
 function constantMovement() {
 
-    mainPiece.y = mainPiece.y + mainPiece.yvelocity;
-    mainPiece.x = mainPiece.x + mainPiece.xvelocity;
+    // only allow movement downward if collisionDetection() allows it
 
-    renderPiece(mainPiece)
+    let proposedX = mainPiece.x + mainPiece.xvelocity;
+    let proposedY =  mainPiece.y + mainPiece.yvelocity;
+
+
+    if (!board.collisionDetection(mainPiece, [proposedX, proposedY])) {
+        mainPiece.x = proposedX;
+        mainPiece.y = proposedY;
+    }
 
     //info
     console.log("x, y: " + mainPiece.x, mainPiece.y);
     console.log("xvel, yvel: ", mainPiece.xvelocity, mainPiece.yvelocity);
-    console.table(board.displayPieces(mainPiece))
 }
 
 function userInput(e) {
-    if (e.code === "ArrowDown") {
-        mainPiece.yvelocity = mainPiece.defaultVelocity + 2;
-        mainPiece.xvelocity = 0;
-    } else if (e.code === "ArrowLeft") {
+
+    // *EDIT --> only allow movement in directions that are allowed by collisionDetection()
+    // if player attempts to move in direction that is restricted, set velocity respective to direction to 0
+    // else reset velocity to default
+
+    if (e.code === "ArrowLeft") {
         mainPiece.yvelocity = 0;
         mainPiece.xvelocity = -mainPiece.defaultVelocity;
     } else if (e.code === "ArrowRight") {
         mainPiece.yvelocity = 0;
         mainPiece.xvelocity = mainPiece.defaultVelocity;
-    }
+    } // add support for space bar to instantly make it go down
 
     else if (e.code === "ArrowUp") {
         mainPiece.rotate();
@@ -266,10 +314,6 @@ function releaseUserInput(e) {
         mainPiece.xvelocity = 0;
         console.log(e.code)
     }
-}
-
-function collisionDetection(piece, proposedCoords) {
-
 }
 
 function renderAllPieces() { // renders pieces that are stillon the board
