@@ -122,6 +122,7 @@ class Board {
 
     constructor() {
         this.grid = this.getClearBoard();
+        this.occupiedCells = []
     }
 
     resetBoard() {
@@ -132,24 +133,6 @@ class Board {
         return Array.from(
             { length: ROWS }, () => Array(COLS).fill(0)
         );
-    }
-
-    updateBoard() {
-        this.displayPieces(mainPiece)
-        console.table(this.grid)
-    }
-
-
-    displayPieces(piece) {
-
-        for (let i = piece.y; i < piece.y + piece.shape.length; i++) {
-            for (let j = piece.x; j < piece.x + piece.shape[0].length; j++) {
-
-                this.grid[i][j] = piece.shape[i-piece.y][j-piece.x]
-            }
-        }
-
-        return this.grid;
     }
 
     collisionDetection(piece, proposedCoords) {
@@ -172,6 +155,8 @@ class Board {
 	                if (piece.y + i + dy >= ROWS) {
                         piece.yvelocity = 0;
                         piece.setStatus = true;
+                        this.setPieces(piece)
+                        console.table(this.grid)
 	                    return true;
 	                }
                 }
@@ -187,11 +172,16 @@ class Board {
         if (piece.setStatus) {
             for (let i = 0; i < piece.shape.length; i++) {
                 for (let j = 0; j < piece.shape[i].length; j++) {
-                    
+                    if (piece.shape[i][j] > 0) {
+                        this.grid[i + piece.y][j + piece.x] = piece.shape[i][j]
+                        this.occupiedCells.push([j + piece.x, i + piece.y, piece.color])
+
+                    }
                 }
             }
         }
     }
+
 
 }
 
@@ -249,18 +239,18 @@ function update() {
         if (generateNewPieceCond()) {
             mainPiece = new Piece();
         }
-        ctx.fillStyle = mainPiece.color;
 
 
         constantMovement()
-        board.updateBoard()
         // board.updateBoard()
-        renderPiece(mainPiece)
+        renderPiece(mainPiece);
+        renderSetPieces();
 
 
 
     } else { // freeze game
         renderPiece(mainPiece);
+        renderSetPieces()
     }
 }
 
@@ -277,14 +267,19 @@ function renderPiece(piece) {
     for (let i = 0; i < piece.shape.length; i++) {
         for (let j = 0; j < piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
-                ctx.fillStyle= "red"
-                ctx.fillRect(piece.x + j, piece.y + i, 1, 1)
-            } else {
-                ctx.fillStyle = "yellow"
+                ctx.fillStyle = piece.color;
                 ctx.fillRect(piece.x + j, piece.y + i, 1, 1)
             }
         }
     }
+
+}
+
+function renderSetPieces() {
+    board.occupiedCells.forEach((setInfo) => {
+        ctx.fillStyle = setInfo[2]
+        ctx.fillRect(setInfo[0], setInfo[1], 1, 1)
+    })
 }
 
 function generateNewPieceCond() { // determines whether new piece should be generated or not
@@ -343,12 +338,3 @@ function releaseUserInput(e) {
         console.log(e.code)
     }
 }
-
-function renderAllPieces() { // renders pieces that are stillon the board
-
-}
-
-
-
-
-
