@@ -86,30 +86,34 @@ class Piece { // responsible for supplying color, shape, and location of piece
 
         let copyArr = []
         if (!mainPiece.setStatus) {
-	        for (let y = 0; y < this.shape.length; ++y) {
-	            for (let x = 0; x < y; ++x) {
-	                [this.shape[x][y], this.shape[y][x]] =
-	                    [this.shape[y][x], this.shape[x][y]];
-	            }
-	        }
-	
-	        // Reverse the order of the columns.
-	        this.shape.forEach(row => row.reverse());
+            for (let y = 0; y < this.shape.length; ++y) {
+                for (let x = 0; x < y; ++x) {
+                    [this.shape[x][y], this.shape[y][x]] =
+                        [this.shape[y][x], this.shape[x][y]];
+                }
+            }
+
+            // Reverse the order of the columns.
+            this.shape.forEach(row => row.reverse());
         }
 
         for (let i = 0; i < this.shape.length; i++) {
             for (let j = 0; j < this.shape[i].length; j++) {
 
                 if (this.shape[i][j] > 0) {
-	                if (this.x + j < 0) {
-	                    this.x = this.x + 2;
-	                } else if (this.x + j >= COLS) {
+                    if (this.x + j < 0) {
+                        this.x = this.x + 2;
+                    } else if (this.x + j >= COLS) {
                         this.x = this.x - 1
                     }
-	
-	                if (this.y + i>= ROWS) {
-                        this.y = this.y -1;
-	                }
+
+                    if (this.y + i >= ROWS) {
+                        this.y = this.y - 1;
+                    }
+
+                    if (board.grid[this.y + i][this.x + j] > 0) {
+                        this.x = this.x + 2;
+                    }
                 }
             }
         }
@@ -148,24 +152,44 @@ class Board {
             for (let j = 0; j < piece.shape[i].length; j++) {
 
                 if (piece.shape[i][j] > 0) {
-	                if (piece.x + j + dx < 0 || piece.x + j + dx >= COLS) {
-	                    return true;
-	                }
-	
-	                if (piece.y + i + dy >= ROWS) {
+                    if (piece.x + j + dx < 0 || piece.x + j + dx >= COLS) {
+                        return true;
+                    }
+
+                    if (piece.y + i + dy >= ROWS) {
+                        console.log('reached y')
+                        console.log("x pos: ", piece.x + j);
+                        console.log("y pos: ", piece.y + i);
                         piece.yvelocity = 0;
                         piece.setStatus = true;
                         this.setPieces(piece)
                         console.table(this.grid)
-	                    return true;
-	                }
+                        return true;
+                    }
+
+                    if (piece.y + i + dy <= 0) {
+                        endGame();
+                    }
+
+                    if (this.grid[piece.y+i+dy][piece.x+j] > 0) {
+                        console.log('reached y')
+                        console.log("x pos: ", piece.x + j);
+                        console.log("y pos: ", piece.y + i);
+                        piece.yvelocity = 0;
+                        piece.setStatus = true;
+                        this.setPieces(piece)
+                        console.table(this.grid)
+                        return true;
+                    }
+
+                    if (this.grid[i + piece.y][piece.x + j + dx] > 0) {
+                        return true;
+                    }
                 }
             }
         }
 
         return false;
-
-
     }
 
     setPieces(piece) {
@@ -181,8 +205,6 @@ class Board {
             }
         }
     }
-
-
 }
 
 var mainPiece = new Piece();
@@ -216,7 +238,7 @@ window.onload = function () {
 
 let gameLoop = function () {
     playStatus = true;
-    setInterval(update, 1000/10)
+    setInterval(update, 1000 / 10)
     // update()
 }
 
@@ -227,6 +249,12 @@ let pauseFunc = function () {
 let resetBoard = function () {
     playStatus = false;
     reset()
+}
+
+let endGame = function () {
+    playStatus = false;
+    reset()
+    alert("you lost bitch")
 }
 
 function update() {
@@ -263,7 +291,7 @@ function reset() {
 // piece logic
 function renderPiece(piece) {
 
-    
+
     for (let i = 0; i < piece.shape.length; i++) {
         for (let j = 0; j < piece.shape[i].length; j++) {
             if (piece.shape[i][j] > 0) {
@@ -299,7 +327,7 @@ function constantMovement() {
     // only allow movement downward if collisionDetection() allows it
 
     let proposedX = mainPiece.x + mainPiece.xvelocity;
-    let proposedY =  mainPiece.y + mainPiece.yvelocity;
+    let proposedY = mainPiece.y + mainPiece.yvelocity;
 
 
     if (!board.collisionDetection(mainPiece, [proposedX, proposedY])) {
