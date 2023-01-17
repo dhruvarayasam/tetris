@@ -1,35 +1,42 @@
 "use strict";
 
 //constants
-var BLOCK_SIZE = 10;
-var COLS = 36;
-var ROWS = 66;
+var BLOCK_SIZE = 15;
+var COLS = 20;
+var ROWS = 45;
 var canvas;
 var ctx;
-var playStatus = false;
-var gameStart = false;
+var playStatus;
+var totalPiecesDropped = 0
 var playBtn = document.getElementById("play-btn")
 var pauseBtn = document.getElementById("pause-btn")
 var resetBtn = document.getElementById("reset-btn")
+var scoreElement = document.getElementById('score')
+var levelElement = document.getElementById("level")
+var linesElement = document.getElementById("lines");
 var pieces = [];
+var currentScore = 0;
+var currentLines = 0;
+var currentLevels = 0;
 
 class Piece { // responsible for supplying color, shape, and location of piece
     constructor() {
-        this.x = 0;
+        this.x = 15;
         this.y = 0;
         this.defaultVelocity = 1;
         this.yvelocity = 1;
         this.xvelocity = 0;
         this.setStatus = false;
-        this.pieceId = Math.floor((Math.random() * 100)) + 1
+        this.pieceId = Math.floor((Math.random() * 1000)) + 1
         this.color = this.chooseRandomPieceColor();
         this.shape = this.determineShape()
         pieces.push(this);
     }
 
+
     chooseRandomPieceColor() {
         let colorArray = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
-        let num = Math.floor(Math.random() * 7)
+        let num = Math.floor(Math.random() * 6)
         let color = colorArray[num];
 
         return color;
@@ -66,8 +73,8 @@ class Piece { // responsible for supplying color, shape, and location of piece
             [0, 0, 0]]
         ];
 
-        let index = Math.floor(Math.random() * SHAPES.length);
-        let pieceShape = SHAPES[index];
+        let row = Math.floor(Math.random() * SHAPES.length);
+        let pieceShape = SHAPES[row];
 
         for (let i = 0; i < pieceShape.length; i++) {
             for (let j = 0; j < pieceShape[i].length; j++) {
@@ -126,7 +133,6 @@ class Board {
 
     constructor() {
         this.grid = this.getClearBoard();
-        this.occupiedCells = []
     }
 
     resetBoard() {
@@ -146,43 +152,45 @@ class Board {
 
         let dy = proposedCoords[1] - piece.y
         let dx = proposedCoords[0] - piece.x
-
+        console.log(totalPiecesDropped)
 
         for (let i = 0; i < piece.shape.length; i++) {
             for (let j = 0; j < piece.shape[i].length; j++) {
 
                 if (piece.shape[i][j] > 0) {
-                    if (piece.x + j + dx < 0 || piece.x + j + dx >= COLS) {
+                    if (piece.x + j + dx < 0 || piece.x + j + dx >= COLS) { // side border collision
                         return true;
                     }
 
-                    if (piece.y + i + dy >= ROWS) {
-                        console.log('reached y')
-                        console.log("x pos: ", piece.x + j);
-                        console.log("y pos: ", piece.y + i);
+                    if (piece.y + i + dy >= ROWS) { // bottom border collision
                         piece.yvelocity = 0;
                         piece.setStatus = true;
                         this.setPieces(piece)
+                        modifyScore(40)
+                        this.clearLines()
+
                         console.table(this.grid)
                         return true;
                     }
 
-                    if (piece.y + i + dy <= 0) {
-                        endGame();
+                    if (this.grid[piece.y+i+dy][piece.x+j] > 0 && piece.y + i <= 0) {
+                        endGame()
+                        return true;
                     }
 
-                    if (this.grid[piece.y+i+dy][piece.x+j] > 0) {
-                        console.log('reached y')
-                        console.log("x pos: ", piece.x + j);
-                        console.log("y pos: ", piece.y + i);
+                    if (this.grid[Math.floor(piece.y)+i+dy][piece.x+j] > 0) {
                         piece.yvelocity = 0;
                         piece.setStatus = true;
                         this.setPieces(piece)
+                        modifyScore(40)
+
+                        this.clearLines()
+                        
                         console.table(this.grid)
                         return true;
                     }
 
-                    if (this.grid[i + piece.y][piece.x + j + dx] > 0) {
+                    if (this.grid[i + Math.floor(piece.y)][piece.x + j + dx] > 0) {
                         return true;
                     }
                 }
@@ -197,15 +205,55 @@ class Board {
             for (let i = 0; i < piece.shape.length; i++) {
                 for (let j = 0; j < piece.shape[i].length; j++) {
                     if (piece.shape[i][j] > 0) {
-                        this.grid[i + piece.y][j + piece.x] = piece.shape[i][j]
-                        this.occupiedCells.push([j + piece.x, i + piece.y, piece.color])
-
+	                        this.grid[i + piece.y][j + piece.x] = piece.shape[i][j]
                     }
                 }
             }
         }
     }
+
+    detectLines() {
+        // goes through each row in grid and sees whether complete row exists
+        // if complete row exists, it adds index of row to completeLines
+        // returns empty array if no rows contain complete lines
+
+        let completeLines = [] // contains indices of rows w/ complete lines
+        for (let i = 0; i < this.grid.length; i++) {
+            if (!this.grid[i].includes(0)) {
+                completeLines.push(i);
+            }
+        }
+
+        return completeLines;
+    }
+
+    clearLines() {
+        // objective --> takes rows that need to be cleared and clears them
+        let linesArr = this.detectLines()
+
+        if (linesArr.length > 0) { // if rows are complete, they need to be cleared
+            linesArr.forEach((rowNum) => {
+                // first clear row on this.grid
+                for (let i = 0; i < this.grid[rowNum].length; i++) {
+                    this.grid[rowNum][i] = 0; 
+                }
+
+                // move existing pieces down
+                for (let i = rowNum-1; i > 0; i--) {
+                    for (let j = 0; j < this.grid[i].length; j++) {
+                        if (this.grid[i][j] > 0) {
+                            this.grid[i+1][j] = this.grid[i][j]
+                            this.grid[i][j] = this.grid[i-1][j]
+                        }
+                    }
+                }
+
+            })
+        }
+
+    }
 }
+
 
 var mainPiece = new Piece();
 var board = new Board();
@@ -217,6 +265,7 @@ window.onload = function () {
     canvas = document.getElementById("gameCanvas");
     canvas.height = BLOCK_SIZE * ROWS;
     canvas.width = BLOCK_SIZE * COLS;
+    playStatus = "notplaying"
 
     ctx = canvas.getContext("2d");
     ctx.fillStyle = "#FF0000"
@@ -231,30 +280,30 @@ window.onload = function () {
     document.addEventListener('keydown', userInput, false)
     document.addEventListener('keyup', releaseUserInput, false)
 
+    setInterval(update, 1000/10)
+
 
 }
 
 // game loop logic
 
 let gameLoop = function () {
-    playStatus = true;
-    setInterval(update, 1000 / 10)
+    playStatus = 'play'
     // update()
 }
 
 let pauseFunc = function () {
-    playStatus = false;
+    playStatus = 'pause';
 }
 
 let resetBoard = function () {
-    playStatus = false;
-    reset()
+    playStatus = 'notplaying'
 }
 
 let endGame = function () {
-    playStatus = false;
-    reset()
-    alert("you lost bitch")
+    playStatus = 'notplaying'
+    // other endgame stuff
+    alert("you lost.")
 }
 
 function update() {
@@ -262,7 +311,7 @@ function update() {
     ctx.clearRect(0, 0, COLS, ROWS);
 
 
-    if (playStatus) { // play game
+    if (playStatus === 'play') { // play game
 
         if (generateNewPieceCond()) {
             mainPiece = new Piece();
@@ -270,21 +319,24 @@ function update() {
 
 
         constantMovement()
+        mainPiece.y = Math.floor(mainPiece.y)
         // board.updateBoard()
         renderPiece(mainPiece);
         renderSetPieces();
 
 
 
-    } else { // freeze game
+    } else if (playStatus === 'pause') { // freeze game
         renderPiece(mainPiece);
         renderSetPieces()
+    } else {
+        reset()
     }
 }
 
 function reset() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    gameStart = false;
+    board.resetBoard()
+
 }
 
 
@@ -304,10 +356,30 @@ function renderPiece(piece) {
 }
 
 function renderSetPieces() {
-    board.occupiedCells.forEach((setInfo) => {
-        ctx.fillStyle = setInfo[2]
-        ctx.fillRect(setInfo[0], setInfo[1], 1, 1)
-    })
+    let piece = undefined;
+    let index = 0;
+    for (let i = 0; i < board.grid.length; i++) {
+        for (let j = 0; j < board.grid[i].length; j++) {
+            if (board.grid[i][j] > 0) {
+                if (searchPieces(board.grid[i][j]) !== -1) {
+                    index = searchPieces(board.grid[i][j])
+                    piece = pieces[index]
+                    ctx.fillStyle = piece.color;
+                    ctx.fillRect(j, i, 1, 1)
+                }
+            }
+        }
+    }
+}
+
+function searchPieces(id) { // returns index of piece in pieces array, otherwise returns -1
+    for (let i = 0; i < pieces.length; i++) {
+        if (pieces[i].pieceId === id) {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 function generateNewPieceCond() { // determines whether new piece should be generated or not
@@ -365,4 +437,29 @@ function releaseUserInput(e) {
         mainPiece.xvelocity = 0;
         console.log(e.code)
     }
+}
+
+function modifyScore(points) {
+    currentScore += points;
+    console.log("score: ", currentScore)
+    scoreElement.innerHTML = `score: ${currentScore}`;
+}
+
+function modifyLines() {
+    currentLines++;
+}
+
+function modifyLevels() {
+    if (currentLines % 10 === 0) {
+        currentLines++;
+        linesElement.textContent = `lines: ${currentLines}`
+    }
+}
+
+function resetAllScores() {
+    currentScore = 0;
+    currentLines = 0;
+    currentLevels = 0;
+    scoreElement.textContent = `score: ${currentScore}`;
+
 }

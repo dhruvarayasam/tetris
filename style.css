@@ -23,8 +23,8 @@ body {
 }
 
 #button-id {
-    position:absolute;
-    bottom:16.5px;
+    margin:40px;
+    margin-left:0; 
 }
 
 .buttons {
@@ -32,6 +32,7 @@ body {
     border-style:solid;
     border-color:white;
     padding:15px;
+    font-size:15px;
 }
 
 .buttons:active {
