@@ -6,7 +6,7 @@ var COLS = 20;
 var ROWS = 45;
 var canvas;
 var ctx;
-var playStatus;
+var playStatus = 'idleStart'
 var totalPiecesDropped = 0
 var playBtn = document.getElementById("play-btn")
 var pauseBtn = document.getElementById("pause-btn")
@@ -166,7 +166,7 @@ class Board {
                         piece.yvelocity = 0;
                         piece.setStatus = true;
                         this.setPieces(piece)
-                        modifyScore(40)
+                        modifyScore(40 * (currentLevels+1))
                         this.clearLines()
 
                         console.table(this.grid)
@@ -182,7 +182,7 @@ class Board {
                         piece.yvelocity = 0;
                         piece.setStatus = true;
                         this.setPieces(piece)
-                        modifyScore(40)
+                        modifyScore(40 * (currentLevels+1))
 
                         this.clearLines()
                         
@@ -229,10 +229,13 @@ class Board {
 
     clearLines() {
         // objective --> takes rows that need to be cleared and clears them
+
         let linesArr = this.detectLines()
 
         if (linesArr.length > 0) { // if rows are complete, they need to be cleared
             linesArr.forEach((rowNum) => {
+                modifyLines()
+                modifyScore(100 * (currentLevels + 1))
                 // first clear row on this.grid
                 for (let i = 0; i < this.grid[rowNum].length; i++) {
                     this.grid[rowNum][i] = 0; 
@@ -323,20 +326,36 @@ function update() {
         // board.updateBoard()
         renderPiece(mainPiece);
         renderSetPieces();
+        updateScores();
 
 
 
     } else if (playStatus === 'pause') { // freeze game
         renderPiece(mainPiece);
         renderSetPieces()
-    } else {
+    }
+    else {
         reset()
     }
 }
 
 function reset() {
+    playStatus = 'notplaying'
     board.resetBoard()
+    resetAllScores()
+    mainPiece = new Piece()
 
+}
+
+function resetAllScores() {
+
+}
+
+function updateScores() {
+    modifyLevels()
+    scoreElement.innerHTML = `score: ${currentScore}`;
+    linesElement.textContent = `lines: ${currentLines}`
+    levelElement.textContent = `level: ${currentLevels}`
 }
 
 
@@ -424,10 +443,25 @@ function userInput(e) {
     } else if (e.code === "ArrowRight") {
         mainPiece.yvelocity = 0;
         mainPiece.xvelocity = mainPiece.defaultVelocity;
-    } // add support for space bar to instantly make it go down
-
-    else if (e.code === "ArrowUp") {
+    } else if (e.code === "ArrowUp") {
         mainPiece.rotate();
+    } else if (e.code === 'Space') {
+        // determine closest location that piece can land 
+        let collision = false;
+        let yValue = mainPiece.y;
+        console.log('reached')
+        while (!collision) {
+            yValue++
+            for (let i = 0; i < mainPiece.shape.length; i++) {
+                for (let j = 0; j < mainPiece.shape[i].length; j++) {
+                    // x condition
+                    if (yValue + i >= ROWS || (board.grid[yValue + i][mainPiece.x + j] > 0)) {
+                        mainPiece.y = yValue - 1
+                        collision = true;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -441,8 +475,6 @@ function releaseUserInput(e) {
 
 function modifyScore(points) {
     currentScore += points;
-    console.log("score: ", currentScore)
-    scoreElement.innerHTML = `score: ${currentScore}`;
 }
 
 function modifyLines() {
@@ -450,9 +482,8 @@ function modifyLines() {
 }
 
 function modifyLevels() {
-    if (currentLines % 10 === 0) {
-        currentLines++;
-        linesElement.textContent = `lines: ${currentLines}`
+    if (currentLines % 10 === 0 && currentLines > 0) {
+        currentLevels++;
     }
 }
 
@@ -460,6 +491,5 @@ function resetAllScores() {
     currentScore = 0;
     currentLines = 0;
     currentLevels = 0;
-    scoreElement.textContent = `score: ${currentScore}`;
 
 }
